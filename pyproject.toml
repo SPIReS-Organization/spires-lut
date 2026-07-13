@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["meson-python", "wheel", "numpy"]
+build-backend = "mesonpy"
 
 [project]
 name = "spires-lut"
@@ -12,8 +12,13 @@ license = { text = "MIT" }
 authors = [{ name = "Niklas Griessbaum" }]
 keywords = ["snow", "remote sensing", "xarray", "lookup table", "Mie scattering"]
 dependencies = [
-    "spires-contract",
+    "numpy",
+    "ninja",
+    "pandas",
+    "scipy",
     "xarray",
+    "pooch",
+    "joblib",
     "h5py",
 ]
 
@@ -25,8 +30,9 @@ Homepage = "https://github.com/SPIReS-Organization/spires-lut"
 Repository = "https://github.com/SPIReS-Organization/spires-lut"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["spires_lut", "spires_lut.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["spires_lut"]

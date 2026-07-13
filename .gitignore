@@ -8,3 +8,5 @@ dist/
 .tox/
 .venv/
 .claude/
+.DS_Store
+*.zarr

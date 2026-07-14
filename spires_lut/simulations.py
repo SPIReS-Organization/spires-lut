@@ -168,7 +168,6 @@ def single_spectra(
     black_sky: bool = True,
     grain_shape: int = 1,
     impurity_type: str = "dust_skiles_size3",
-    output_quantity: List[str] = ["albedo"],
 ) -> Tuple[Optional[npt.NDArray], Optional[npt.NDArray], npt.NDArray]:
     """
     Single run
@@ -211,15 +210,7 @@ def single_spectra(
 
     # Run simulation
     model = DISORT(**cfg)
-    results = model.run()
+    rfl, albedo, _ = model.run()
 
-    # Map results based on user config
-    albedo = None
-    rfl = None
-    if "albedo" in output_quantity:
-        albedo = results[0]
-    if "reflectance" in output_quantity:
-        rfl = results[1]
-
-    return albedo, rfl, wvl
+    return rfl, albedo, wvl
 

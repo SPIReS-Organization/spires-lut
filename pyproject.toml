@@ -2,9 +2,10 @@
 requires = ["meson-python", "wheel", "numpy"]
 build-backend = "mesonpy"
 
+
 [project]
 name = "spires-lut"
-version = "0.1.0"
+dynamic = ["version"]  # version derived from git tags via setuptools_scm
 description = "SPIReS lookup tables: create, read, and write reflectance LUTs"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.9"
@@ -38,3 +39,7 @@ include = ["spires_lut", "spires_lut.*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["spires_lut"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "node-and-date"

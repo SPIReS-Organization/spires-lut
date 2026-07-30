@@ -22,7 +22,6 @@ dependencies = [
     "pooch",
     "joblib",
     "h5py",
-    "isofit"
 ]
 
 [project.optional-dependencies]

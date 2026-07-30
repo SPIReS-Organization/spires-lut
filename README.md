@@ -6,7 +6,7 @@ write the Mie-scattering reflectance LUTs the inversion interpolates.
 
 LUTs conform to the LUT boundary defined in
 [`spires-contract`](https://github.com/SPIReS-Organization/spires-contract) —
-dims `(band, solar_angle, dust_concentration, grain_size)`.
+dims `(band, solar_angle, lap_concentration, sqrt_grain_radius)`.
 
 
 ## DISORT

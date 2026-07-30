@@ -5,8 +5,8 @@ from joblib import Parallel, delayed
 import xarray as xr
 from typing import List, Tuple, Optional, Union
 import numpy.typing as npt
-from isofit.core.common import VectorInterpolator
 
+from spires_lut.common import VectorInterpolator
 from spires_lut.disort_wrapper import DISORT
 from spires_contract import conventions as c
 

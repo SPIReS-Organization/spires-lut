@@ -32,13 +32,12 @@ def create_spires_lut(
     svf_min: Optional[float] = 1e-3,
     svf_max: Optional[float] = 1.0,
     svf_points: Optional[int] = 5,
-
 ) -> None:
     """
     Generate SPIReS broadband blue-sky albedo and spectral reflectance lookup tables (LUTs)
     using the DISORT snow surface model and prebuilt atmospheric lookup table.
 
-    This assumes the product has undergone BRDF normalization (similar to most VIIRS-like products). 
+    This assumes the product has undergone BRDF normalization (similar to most VIIRS-like products).
     And that VZA within DISORT can be treated as 0deg. Therefore, RAA also is assumed to be a default value.
 
     The generated blue-sky reflectance LUT is at the full resolution (10 nm , across the entire VSWIR spectrum).
@@ -133,25 +132,35 @@ def create_spires_lut(
     )
 
     # Grid resolution
-    altitude = np.linspace(altitude_min, altitude_max+0.001, altitude_points, dtype=np.float32)
-    illumination_angle = np.linspace(illumination_angle_min, illumination_angle_max+0.001, illumination_angle_points, dtype=np.float32)
+    altitude = np.linspace(
+        altitude_min, altitude_max + 0.001, altitude_points, dtype=np.float32
+    )
+    illumination_angle = np.linspace(
+        illumination_angle_min,
+        illumination_angle_max + 0.001,
+        illumination_angle_points,
+        dtype=np.float32,
+    )
     sqrt_grain_radius = np.sqrt(np.arange(30.0, 1500.001, 10.0, dtype=np.float32))
-    dust_conc = np.linspace(lap_min, lap_max+0.001, lap_points, dtype=np.float32)
-    toa_sza = np.linspace(toa_sza_min, toa_sza_max+0.001, toa_sza_points, dtype=np.float32)
-    svf = np.linspace(svf_min, svf_max+0.001, svf_points, dtype=np.float32)
+    dust_conc = np.linspace(lap_min, lap_max + 0.001, lap_points, dtype=np.float32)
+    toa_sza = np.linspace(
+        toa_sza_min, toa_sza_max + 0.001, toa_sza_points, dtype=np.float32
+    )
+    svf = np.linspace(svf_min, svf_max + 0.001, svf_points, dtype=np.float32)
 
     # Assumed fixed, clear atmosphere
     AOT = 0.05
 
     # Set up shape of the luts
     shape_alb = (
-        len(altitude),
-        len(sqrt_grain_radius),
-        len(dust_conc),
         len(toa_sza),
         len(illumination_angle),
+        len(dust_conc),
+        len(sqrt_grain_radius),
         len(svf),
+        len(altitude),
     )
+
     shape_refl = (
         len(wavelength),
         len(illumination_angle),
@@ -168,35 +177,17 @@ def create_spires_lut(
         {
             c.ALBEDO_LUT_VARIABLE: (
                 [
-                    "altitude",
-                    "sqrt_grain_radius",
-                    "lap_concentration",
                     "solar_zenith",
                     "illumination_angle",
+                    "lap_concentration",
+                    "sqrt_grain_radius",
                     "skyview",
+                    "altitude",
                 ],
                 np.zeros(shape_alb, dtype=np.float32),
             )
         },
         coords={
-            "altitude": xr.DataArray(
-                altitude,
-                dims=("altitude",),
-                attrs={"units": c.LUT_AXIS_UNITS["altitude"]},
-            ),
-            "sqrt_grain_radius": xr.DataArray(
-                sqrt_grain_radius,
-                dims=("sqrt_grain_radius",),
-                attrs={"units": c.LUT_AXIS_UNITS["sqrt_grain_radius"]},
-            ),
-            "lap_concentration": xr.DataArray(
-                dust_conc,
-                dims=("lap_concentration",),
-                attrs={
-                    "units": c.LUT_AXIS_UNITS["lap_concentration"],
-                    "lap_type": "dust",
-                },
-            ),
             "solar_zenith": xr.DataArray(
                 toa_sza,
                 dims=("solar_zenith",),
@@ -206,6 +197,24 @@ def create_spires_lut(
                 illumination_angle,
                 dims=("illumination_angle",),
                 attrs={"units": c.LUT_AXIS_UNITS["illumination_angle"]},
+            ),
+            "lap_concentration": xr.DataArray(
+                dust_conc,
+                dims=("lap_concentration",),
+                attrs={
+                    "units": c.LUT_AXIS_UNITS["lap_concentration"],
+                    "lap_type": "dust",
+                },
+            ),
+            "sqrt_grain_radius": xr.DataArray(
+                sqrt_grain_radius,
+                dims=("sqrt_grain_radius",),
+                attrs={"units": c.LUT_AXIS_UNITS["sqrt_grain_radius"]},
+            ),
+            "altitude": xr.DataArray(
+                altitude,
+                dims=("altitude",),
+                attrs={"units": c.LUT_AXIS_UNITS["altitude"]},
             ),
             "skyview": xr.DataArray(
                 svf, dims=("skyview",), attrs={"units": c.LUT_AXIS_UNITS["skyview"]}
@@ -284,21 +293,21 @@ def create_spires_lut(
             # We could alternatively use the dir_dir and dif_dir for more directional-like quantities.
             # Both have pros/cons. And depends on how much you trust the BRDF model vs surface roughness assumptions.
 
-            # We could also choose to save all 4 of these raw rfl defnitions, but at least for the moment for SPIReS it 
+            # We could also choose to save all 4 of these raw rfl defnitions, but at least for the moment for SPIReS it
             # doesn't seem very useful
             _, _, rho_dir_dif, rho_dif_dif, _ = run_point(
                 sza=ill_angle_val,
-                vza=0.0, # VZA assumed to be zero
-                raa=0.0, # RAA assumed to not matter
+                vza=0.0,  # VZA assumed to be zero
+                raa=0.0,  # RAA assumed to not matter
                 grain_radius=[np.round(sq_r**2)],
                 lap_concentration=[d],
-                algae_concentration=[0.0], # no algae
-                lwc=[0.0], # no liquid water
+                algae_concentration=[0.0],  # no algae
+                lwc=[0.0],  # no liquid water
                 lap_type=lap_type.lower(),
                 grain_shape=grain_shape,
-                snow_density=[300.0], # kg /m3
-                dz=[100.0], # 100 m -> optically deep
-                n_layers=1, # 1 = single layer snowpack
+                snow_density=[300.0],  # kg /m3
+                dz=[100.0],  # 100 m -> optically deep
+                n_layers=1,  # 1 = single layer snowpack
             )
 
             # Evaluate all atmospheric variations (altitude, toa_sza, svf) for this point
@@ -369,7 +378,7 @@ def create_spires_lut(
                                 rfl,
                             )
                         )
-        
+
         return batch_output
 
     with (
@@ -384,7 +393,7 @@ def create_spires_lut(
             for indices, albedo, rfl in batch_res:
                 alt_idx, grain_idx, dust_idx, sza_idx, ill_idx, svf_idx = indices
                 ds_alb["albedo"][
-                    alt_idx, grain_idx, dust_idx, sza_idx, ill_idx, svf_idx
+                    sza_idx, ill_idx, dust_idx, grain_idx, svf_idx, alt_idx
                 ] = albedo.astype(np.float32)
                 if rfl is not None:
                     ds_rfl["reflectance"][:, ill_idx, dust_idx, grain_idx] = rfl.astype(

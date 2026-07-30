@@ -8,3 +8,4 @@ dist/
 .tox/
 .venv/
 .claude/
+local/

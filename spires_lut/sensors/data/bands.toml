@@ -81,3 +81,61 @@ bands = [
 ]
 
 # --- END GENERATED ---
+
+# ---------------------------------------------------------------------------
+# Hand-written entries. Everything above the END GENERATED marker is rewritten by
+# tools/fetch_srfs.py; everything below is maintained by hand.
+# ---------------------------------------------------------------------------
+
+# Landsat 10 (formerly Landsat Next). No measured SRFs exist yet; bands are modelled as
+# Gaussians from the published centre / bandwidth table. 21 VSWIR bands; the 5 TIR bands
+# (8300-12000 nm) are outside the DISORT grid and deliberately omitted.
+# Source: eoportal.org "Landsat Next" Table 3 (citing NASA science.nasa.gov/mission/landsat-10
+# and USGS usgs.gov/landsat-missions/landsat-10), cross-checked against the USGS
+# "Spectral Comparison: Landsat 8 & 9 vs. Landsat 10" graphic (June 2026). Retrieved 2026-11-08.
+[sensors.LANDSAT10]
+platform = "Landsat 10"
+srf_source = "synthesised gaussian from published centre/bandwidth: https://www.eoportal.org/satellite-missions/landsat-next Table 3; https://www.usgs.gov/landsat-missions/landsat-10 (retrieved 2026-11-08)"
+bands = [
+  { name = "B1",  long_name = "violet",          center_nm = 412.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B2",  long_name = "coastal aerosol", center_nm = 443.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B3",  long_name = "blue",            center_nm = 490.0,  fwhm_nm = 65.0,  response = "gaussian" },
+  { name = "B4",  long_name = "green",           center_nm = 560.0,  fwhm_nm = 35.0,  response = "gaussian" },
+  { name = "B5",  long_name = "yellow",          center_nm = 600.0,  fwhm_nm = 30.0,  response = "gaussian" },
+  { name = "B6",  long_name = "orange",          center_nm = 620.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B7",  long_name = "red 1",           center_nm = 650.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B8",  long_name = "red 2",           center_nm = 665.0,  fwhm_nm = 30.0,  response = "gaussian" },
+  { name = "B9",  long_name = "red edge 1",      center_nm = 705.0,  fwhm_nm = 15.0,  response = "gaussian" },
+  { name = "B10", long_name = "red edge 2",      center_nm = 740.0,  fwhm_nm = 15.0,  response = "gaussian" },
+  { name = "B11", long_name = "NIR broad",       center_nm = 842.0,  fwhm_nm = 115.0, response = "gaussian" },
+  { name = "B12", long_name = "NIR 1",           center_nm = 865.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B13", long_name = "water vapor",     center_nm = 945.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B14", long_name = "liquid water",    center_nm = 985.0,  fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B15", long_name = "snow/ice 1",      center_nm = 1035.0, fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B16", long_name = "snow/ice 2",      center_nm = 1090.0, fwhm_nm = 20.0,  response = "gaussian" },
+  { name = "B17", long_name = "cirrus",          center_nm = 1375.0, fwhm_nm = 30.0,  response = "gaussian" },
+  { name = "B18", long_name = "SWIR 1",          center_nm = 1610.0, fwhm_nm = 90.0,  response = "gaussian" },
+  { name = "B19", long_name = "SWIR 2a",         center_nm = 2038.0, fwhm_nm = 25.0,  response = "gaussian" },
+  { name = "B20", long_name = "SWIR 2b",         center_nm = 2108.0, fwhm_nm = 40.0,  response = "gaussian" },
+  { name = "B21", long_name = "SWIR 2c",         center_nm = 2211.0, fwhm_nm = 40.0,  response = "gaussian" },
+]
+
+# HLS L30: Landsat 8/9 OLI resampled to 30 m; no pan band. Codes follow the HLS/spires-io
+# convention (B01..B07, B09).
+[sensors.HLSL30]
+platform = "Landsat 8/9 (HLS L30)"
+curves_from = "OLI"
+rename = { B1 = "B01", B2 = "B02", B3 = "B03", B4 = "B04", B5 = "B05", B6 = "B06", B7 = "B07", B9 = "B09" }
+
+# HLS S30 as the product intends: MSI bands bandpass-adjusted to OLI. HLS applies the
+# adjustment to exactly these seven bands, so the OLI curves are used under the S30 codes.
+[sensors.HLSS30]
+platform = "Sentinel-2A/B (HLS S30, OLI-adjusted)"
+curves_from = "OLI"
+rename = { B1 = "B01", B2 = "B02", B3 = "B03", B4 = "B04", B5 = "B8A", B6 = "B11", B7 = "B12" }
+
+# HLS S30 as "what the detector saw": MSI (S2A) curves under the S30 codes. Registered
+# alongside HLSS30 so spires-36c can quantify how much the choice matters.
+[sensors."HLSS30-msi"]
+platform = "Sentinel-2A (HLS S30, native MSI curves)"
+curves_from = "MSI"

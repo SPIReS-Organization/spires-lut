@@ -90,3 +90,35 @@ def test_band_average_requires_wavelength_dim():
     spectral = xr.DataArray(np.zeros(3), dims=("x",))
     with pytest.raises(ValueError, match="band"):
         band_average(spectral, _sensor(Band(name="G", center_nm=1000.0, fwhm_nm=30.0, response="gaussian")))
+
+
+from pathlib import Path
+from unittest import mock
+
+import spires_lut.sensors.convolve as convolve_mod
+
+TEST_DATA = Path(__file__).parent / "data"
+
+
+def _patch_srf_dir(monkeypatch):
+    """Point load_srf at tests/data instead of the bundled package data."""
+    convolve_mod.load_srf.cache_clear()
+    monkeypatch.setattr(
+        convolve_mod.resources, "files", lambda _pkg: TEST_DATA, raising=True
+    )
+
+
+def test_srf_flat_curve_matches_tophat_with_same_edges(monkeypatch):
+    _patch_srf_dir(monkeypatch)
+    srf = Band(name="F", center_nm=860.0, fwhm_nm=40.0, response="srf", srf_file="flat_srf.csv", srf_band="F")
+    top = Band(name="T", center_nm=860.0, fwhm_nm=40.0, response="tophat", lower_nm=840.0, upper_nm=880.0)
+    np.testing.assert_allclose(band_weights(srf, GRID), band_weights(top, GRID), atol=1e-12)
+    convolve_mod.load_srf.cache_clear()
+
+
+def test_srf_missing_column_names_band_and_file(monkeypatch):
+    _patch_srf_dir(monkeypatch)
+    bad = Band(name="Z", center_nm=860.0, fwhm_nm=40.0, response="srf", srf_file="flat_srf.csv", srf_band="nope")
+    with pytest.raises(ValueError, match="flat_srf.csv"):
+        band_weights(bad, GRID)
+    convolve_mod.load_srf.cache_clear()

@@ -1,0 +1,83 @@
+# --- BEGIN GENERATED (tools/fetch_srfs.py) ---
+[sensors.OLI]
+platform = "Landsat 8"
+srf_source = "https://landsat.usgs.gov/landsat/spectral_viewer/bands/L8_OLI_RSR.xlsx (USGS Landsat 8 OLI relative spectral response (Spectral Characteristics Viewer); retrieved 2026-11-09)"
+bands = [
+  { name = "B1", long_name = "coastal aerosol", center_nm = 443.0, fwhm_nm = 15.0, response = "srf", srf_file = "oli.csv", srf_band = "B1" },
+  { name = "B2", long_name = "blue", center_nm = 482.6, fwhm_nm = 59.0, response = "srf", srf_file = "oli.csv", srf_band = "B2" },
+  { name = "B3", long_name = "green", center_nm = 561.3, fwhm_nm = 57.0, response = "srf", srf_file = "oli.csv", srf_band = "B3" },
+  { name = "B4", long_name = "red", center_nm = 654.6, fwhm_nm = 37.0, response = "srf", srf_file = "oli.csv", srf_band = "B4" },
+  { name = "B5", long_name = "near infrared", center_nm = 864.6, fwhm_nm = 27.0, response = "srf", srf_file = "oli.csv", srf_band = "B5" },
+  { name = "B6", long_name = "shortwave infrared 1", center_nm = 1609.1, fwhm_nm = 84.0, response = "srf", srf_file = "oli.csv", srf_band = "B6" },
+  { name = "B7", long_name = "shortwave infrared 2", center_nm = 2201.2, fwhm_nm = 186.0, response = "srf", srf_file = "oli.csv", srf_band = "B7" },
+  { name = "B8", long_name = "panchromatic", center_nm = 591.7, fwhm_nm = 171.0, response = "srf", srf_file = "oli.csv", srf_band = "B8" },
+  { name = "B9", long_name = "cirrus", center_nm = 1373.5, fwhm_nm = 19.0, response = "srf", srf_file = "oli.csv", srf_band = "B9" },
+]
+
+[sensors.OLI2]
+platform = "Landsat 9"
+srf_source = "https://landsat.usgs.gov/landsat/spectral_viewer/bands/L9_OLI2_RSR.xlsx (USGS Landsat 9 OLI-2 relative spectral response (GLAMR-derived; Spectral Characteristics Viewer); retrieved 2026-11-09)"
+bands = [
+  { name = "B1", long_name = "coastal aerosol", center_nm = 442.8, fwhm_nm = 14.0, response = "srf", srf_file = "oli2.csv", srf_band = "B1" },
+  { name = "B2", long_name = "blue", center_nm = 482.3, fwhm_nm = 59.0, response = "srf", srf_file = "oli2.csv", srf_band = "B2" },
+  { name = "B3", long_name = "green", center_nm = 560.9, fwhm_nm = 56.0, response = "srf", srf_file = "oli2.csv", srf_band = "B3" },
+  { name = "B4", long_name = "red", center_nm = 654.3, fwhm_nm = 36.0, response = "srf", srf_file = "oli2.csv", srf_band = "B4" },
+  { name = "B5", long_name = "near infrared", center_nm = 864.6, fwhm_nm = 27.0, response = "srf", srf_file = "oli2.csv", srf_band = "B5" },
+  { name = "B6", long_name = "shortwave infrared 1", center_nm = 1608.4, fwhm_nm = 85.0, response = "srf", srf_file = "oli2.csv", srf_band = "B6" },
+  { name = "B7", long_name = "shortwave infrared 2", center_nm = 2201.1, fwhm_nm = 188.0, response = "srf", srf_file = "oli2.csv", srf_band = "B7" },
+  { name = "B8", long_name = "panchromatic", center_nm = 593.9, fwhm_nm = 172.0, response = "srf", srf_file = "oli2.csv", srf_band = "B8" },
+  { name = "B9", long_name = "cirrus", center_nm = 1374.0, fwhm_nm = 20.0, response = "srf", srf_file = "oli2.csv", srf_band = "B9" },
+]
+
+[sensors.MSI]
+platform = "Sentinel-2A"
+srf_source = "https://sentiwiki.copernicus.eu/__attachments/a_ece6183b6698587e7ecd9804974bece3d82e39e151aa5aeca9d8fd95e1f1558c/COPE-GSEG-EOPG-TN-15-0007%20-%20Sentinel-2%20Spectral%20Response%20Functions%202024%20-%204.0.xlsx?cb=05a866b9653a4d2bc442df394ea6cc7a (ESA COPE-GSEG-EOPG-TN-15-0007 Sentinel-2 Spectral Response Functions, v4.0 (2024-06-04); retrieved 2026-11-09)"
+bands = [
+  { name = "B01", long_name = "coastal aerosol", center_nm = 442.7, fwhm_nm = 19.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B01" },
+  { name = "B02", long_name = "blue", center_nm = 492.7, fwhm_nm = 64.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B02" },
+  { name = "B03", long_name = "green", center_nm = 559.8, fwhm_nm = 34.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B03" },
+  { name = "B04", long_name = "red", center_nm = 664.6, fwhm_nm = 29.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B04" },
+  { name = "B05", long_name = "red edge 1", center_nm = 704.1, fwhm_nm = 13.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B05" },
+  { name = "B06", long_name = "red edge 2", center_nm = 740.5, fwhm_nm = 13.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B06" },
+  { name = "B07", long_name = "red edge 3", center_nm = 782.8, fwhm_nm = 18.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B07" },
+  { name = "B08", long_name = "near infrared", center_nm = 832.8, fwhm_nm = 104.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B08" },
+  { name = "B8A", long_name = "narrow near infrared", center_nm = 864.7, fwhm_nm = 19.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B8A" },
+  { name = "B09", long_name = "water vapour", center_nm = 945.1, fwhm_nm = 18.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B09" },
+  { name = "B10", long_name = "cirrus", center_nm = 1373.5, fwhm_nm = 29.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B10" },
+  { name = "B11", long_name = "shortwave infrared 1", center_nm = 1613.7, fwhm_nm = 89.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B11" },
+  { name = "B12", long_name = "shortwave infrared 2", center_nm = 2202.4, fwhm_nm = 173.0, response = "srf", srf_file = "msi_s2a.csv", srf_band = "B12" },
+]
+
+[sensors.MSI-S2B]
+platform = "Sentinel-2B"
+srf_source = "https://sentiwiki.copernicus.eu/__attachments/a_ece6183b6698587e7ecd9804974bece3d82e39e151aa5aeca9d8fd95e1f1558c/COPE-GSEG-EOPG-TN-15-0007%20-%20Sentinel-2%20Spectral%20Response%20Functions%202024%20-%204.0.xlsx?cb=05a866b9653a4d2bc442df394ea6cc7a (ESA COPE-GSEG-EOPG-TN-15-0007 Sentinel-2 Spectral Response Functions, v4.0 (2024-06-04); retrieved 2026-11-09)"
+bands = [
+  { name = "B01", long_name = "coastal aerosol", center_nm = 442.2, fwhm_nm = 19.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B01" },
+  { name = "B02", long_name = "blue", center_nm = 492.3, fwhm_nm = 64.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B02" },
+  { name = "B03", long_name = "green", center_nm = 558.9, fwhm_nm = 34.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B03" },
+  { name = "B04", long_name = "red", center_nm = 664.9, fwhm_nm = 29.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B04" },
+  { name = "B05", long_name = "red edge 1", center_nm = 703.8, fwhm_nm = 14.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B05" },
+  { name = "B06", long_name = "red edge 2", center_nm = 739.1, fwhm_nm = 12.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B06" },
+  { name = "B07", long_name = "red edge 3", center_nm = 779.7, fwhm_nm = 18.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B07" },
+  { name = "B08", long_name = "near infrared", center_nm = 832.9, fwhm_nm = 104.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B08" },
+  { name = "B8A", long_name = "narrow near infrared", center_nm = 864.0, fwhm_nm = 20.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B8A" },
+  { name = "B09", long_name = "water vapour", center_nm = 943.2, fwhm_nm = 19.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B09" },
+  { name = "B10", long_name = "cirrus", center_nm = 1376.9, fwhm_nm = 28.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B10" },
+  { name = "B11", long_name = "shortwave infrared 1", center_nm = 1610.4, fwhm_nm = 92.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B11" },
+  { name = "B12", long_name = "shortwave infrared 2", center_nm = 2185.7, fwhm_nm = 183.0, response = "srf", srf_file = "msi_s2b.csv", srf_band = "B12" },
+]
+
+[sensors.MODIS]
+platform = "Terra"
+srf_source = "https://mcst.gsfc.nasa.gov/sites/default/files/file_attachments/Terra_RSR_in-band.xlsx (NASA MCST Terra MODIS (PFM) in-band relative spectral response; retrieved 2026-11-09)"
+bands = [
+  { name = "1", long_name = "red", center_nm = 646.2, fwhm_nm = 46.0, response = "srf", srf_file = "modis_terra.csv", srf_band = "1" },
+  { name = "2", long_name = "near infrared", center_nm = 856.5, fwhm_nm = 37.4, response = "srf", srf_file = "modis_terra.csv", srf_band = "2" },
+  { name = "3", long_name = "blue", center_nm = 465.7, fwhm_nm = 18.4, response = "srf", srf_file = "modis_terra.csv", srf_band = "3" },
+  { name = "4", long_name = "green", center_nm = 553.7, fwhm_nm = 19.3, response = "srf", srf_file = "modis_terra.csv", srf_band = "4" },
+  { name = "5", long_name = "1240 nm", center_nm = 1242.1, fwhm_nm = 23.7, response = "srf", srf_file = "modis_terra.csv", srf_band = "5" },
+  { name = "6", long_name = "1640 nm", center_nm = 1629.2, fwhm_nm = 28.8, response = "srf", srf_file = "modis_terra.csv", srf_band = "6" },
+  { name = "7", long_name = "2130 nm", center_nm = 2114.3, fwhm_nm = 51.8, response = "srf", srf_file = "modis_terra.csv", srf_band = "7" },
+]
+
+# --- END GENERATED ---

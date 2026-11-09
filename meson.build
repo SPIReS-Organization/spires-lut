@@ -38,3 +38,20 @@ py.extension_module('disort',
   dependencies : py_dep,
   install : true,
 )
+
+py.install_sources(
+  [
+    'spires_lut/__init__.py',
+    'spires_lut/common.py',
+    'spires_lut/disort_wrapper.py',
+    'spires_lut/io.py',
+    'spires_lut/lut.py',
+    'spires_lut/simulate.py',
+  ],
+  subdir: 'spires_lut',
+)
+
+install_subdir('spires_lut/pyrt', install_dir: py.get_install_dir() / 'spires_lut',
+               exclude_directories: ['__pycache__'])
+install_subdir('spires_lut/sensors', install_dir: py.get_install_dir() / 'spires_lut',
+               exclude_directories: ['__pycache__'])

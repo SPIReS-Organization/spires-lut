@@ -13,7 +13,7 @@ license = { text = "MIT" }
 authors = [{ name = "Niklas Griessbaum" }]
 keywords = ["snow", "remote sensing", "xarray", "lookup table", "Mie scattering"]
 dependencies = [
-    "spires-contract @ git+https://github.com/SPIReS-Organization/spires-contract.git@v1.0.0",
+    "spires-contract @ git+https://github.com/SPIReS-Organization/spires-contract.git@v2.0.0",
     "numpy",
     "ninja",
     "pandas",
@@ -22,10 +22,12 @@ dependencies = [
     "pooch",
     "joblib",
     "h5py",
+    "tomli; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "netCDF4"]
+tools = ["openpyxl"]
 
 [project.urls]
 Homepage = "https://github.com/SPIReS-Organization/spires-lut"
@@ -37,7 +39,7 @@ include = ["spires_lut", "spires_lut.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["spires_lut"]
+pythonpath = ["."]
 
 [tool.setuptools_scm]
 version_scheme = "post-release"

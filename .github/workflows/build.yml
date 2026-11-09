@@ -31,10 +31,7 @@ jobs:
           python -m pip install --upgrade pip build
           python -m build
 
-      # Scaffolding package: no tests yet, and its family deps are not on PyPI.
-      # Install without deps so CI validates packaging + import. Replace with a
-      # full ".[test]" + pytest run once real code and tests land.
-      - name: Install (no deps) + import smoke test
-        run: |
-          pip install --no-deps dist/*.whl
-          python -c "import spires_lut; print('spires_lut', spires_lut.__version__)"
+      - name: Install wheel with test extras
+        run: pip install "$(ls dist/*.whl)[test]"
+      - name: Run tests
+        run: pytest -q

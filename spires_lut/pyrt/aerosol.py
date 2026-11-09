@@ -4,7 +4,7 @@ required by DISORT.
 # TODO: add parameter validators if these classes are ok
 import numpy as np
 from spires_lut.pyrt.eos import _Altitude
-from scipy.interpolate import interp2d
+from scipy.interpolate import RegularGridInterpolator
 
 
 class Conrath:
@@ -315,9 +315,17 @@ class _Interpolator:
 
     def linear(self) -> np.ndarray:
         intpf = np.zeros((self.__coeff.shape[0], self.__particle_size.shape[0], self.__wavelength.shape[0]))
+        # Clip queries to the grid so out-of-range points take the nearest edge
+        # value, matching interp2d's fill_value=None (nearest extrapolation).
+        # RegularGridInterpolator(fill_value=None) would instead extrapolate linearly.
+        pp, ww = np.meshgrid(np.clip(self.__particle_size, self.__pgrid.min(), self.__pgrid.max()),
+                             np.clip(self.__wavelength, self.__wgrid.min(), self.__wgrid.max()),
+                             indexing="ij")
+        query = np.stack([pp.ravel(), ww.ravel()], axis=-1)
         for i in range(len(intpf)):
-            pf = interp2d(self.__pgrid, self.__wgrid, self.__coeff[i, :, :].T)
-            intpf[i, :, :] = pf(self.__particle_size, self.__wavelength).T
+            rgi = RegularGridInterpolator((self.__pgrid, self.__wgrid), self.__coeff[i, :, :],
+                                          method="linear", bounds_error=False, fill_value=None)
+            intpf[i, :, :] = rgi(query).reshape(pp.shape)
         return intpf
 
     @staticmethod

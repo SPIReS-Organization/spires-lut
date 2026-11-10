@@ -5,7 +5,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "spires-lut"
-dynamic = ["version"]  # version derived from git tags via setuptools_scm
+dynamic = ["version"]  # meson-python reads it from project(version:) in meson.build
 description = "SPIReS lookup tables: create, read, and write reflectance LUTs"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.9"

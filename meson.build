@@ -1,4 +1,5 @@
-project('pyDISORT', 'c', 'fortran',
+project('spires-lut', 'c', 'fortran',
+  version: '0.1.0',
   meson_version: '>=1.5.0',
 )
 

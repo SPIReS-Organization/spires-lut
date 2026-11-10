@@ -46,7 +46,8 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--atm-lut", type=Path, help="MODTRAN-like atmospheric LUT (required unless --hyperspectral)")
     ap.add_argument("--hyperspectral", type=Path, help="existing dir holding spires_reflectance_lut.nc; skips DISORT")
-    ap.add_argument("--lap-type", default="dust_skiles_size3", help="DISORT lap_type stem (default: dust_skiles_size3)")
+    ap.add_argument("--lap-type", default="dust_skiles_size3",
+                    help="DISORT lap optical-property stem; also names the output files (default: dust_skiles_size3)")
     ap.add_argument("--sensors", nargs="+", default=DEFAULT_SENSORS, choices=list_sensors(), metavar="SENSOR")
     ap.add_argument("--cores", type=int, default=1)
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -62,13 +63,19 @@ def main() -> None:
 
     hs_path = hs_dir / "spires_reflectance_lut.nc"
     hs = read_lut(hs_path)
-    lap_type = hs["lap_concentration"].attrs["lap_type"]
     log.info("hyperspectral LUT %s: %s", hs_path, dict(hs.sizes))
 
-    for name in a.sensors:
+    # simulate.py stamps every LUT's lap_type attr as the contract family "dust", so the
+    # file name has to come from the optical-property stem the user actually ran.
+    targets = {name: a.out / sensor_lut_filename(name, a.lap_type) for name in a.sensors}
+    existing = [p for p in targets.values() if p.exists()]
+    if existing:
+        ap.error("refusing to overwrite: " + ", ".join(str(p) for p in existing))
+
+    for name, out_path in targets.items():
         t0 = time.perf_counter()
         ds = build_sensor_lut(hs, get_sensor(name), source=str(hs_path))
-        path = write_lut(ds, a.out / sensor_lut_filename(name, lap_type))
+        path = write_lut(ds, out_path)
         log.info("%-11s %2d bands -> %s (%.2f s)", name, ds.sizes["band"], path.name, time.perf_counter() - t0)
 
 

@@ -11,15 +11,27 @@ from spires_lut.disort_wrapper import DISORT
 from spires_contract import conventions as c
 
 
+def grain_radius_grid(
+    grain_radius_min: float = 30.0,
+    grain_radius_max: float = 1500.0,
+    grain_radius_step: float = 10.0,
+) -> npt.NDArray[np.float32]:
+    """Grain radii (um) sampled by the LUTs; the default is the 148-point production grid."""
+    return np.arange(grain_radius_min, grain_radius_max + 0.001, grain_radius_step, dtype=np.float32)
+
+
 def create_spires_lut(
     output_dir: Union[str, Path],
-    atm_lut: Union[str, Path],
+    atm_lut: Optional[Union[str, Path]] = None,
     cpu_cores: Optional[int] = 1,
     grain_shape: Optional[int] = 1,
     lap_type: Optional[str] = "dust_skiles_size3",
     lap_min: Optional[float] = 0.0,
     lap_max: Optional[float] = 4000.0,
     lap_points: Optional[int] = 10,
+    grain_radius_min: float = 30.0,
+    grain_radius_max: float = 1500.0,
+    grain_radius_step: float = 10.0,
     altitude_min: Optional[float] = 0.0,
     altitude_max: Optional[float] = 7.0,
     altitude_points: Optional[int] = 7,
@@ -35,7 +47,7 @@ def create_spires_lut(
 ) -> None:
     """
     Generate SPIReS broadband blue-sky albedo and spectral reflectance lookup tables (LUTs)
-    using the DISORT snow surface model and prebuilt atmospheric lookup table.
+    using the DISORT snow surface model and, optionally, a prebuilt atmospheric lookup table.
 
     This assumes the product has undergone BRDF normalization (similar to most VIIRS-like products).
     And that VZA within DISORT can be treated as 0deg. Therefore, RAA also is assumed to be a default value.
@@ -43,12 +55,17 @@ def create_spires_lut(
     The generated blue-sky reflectance LUT is at the full resolution (10 nm , across the entire VSWIR spectrum).
     The resulting LUT from this must be then passed to the method to convolve to sensor wavelengths.
 
+    The reflectance LUT is stored at the atmosphere grid corner (altitude 0, TOA SZA 0, sky-view 1e-3),
+    where the diffuse fraction is below ~1e-2 at every illumination angle, so it is the black-sky
+    directional-hemispherical reflectance to better than 0.1 %. Without ``atm_lut`` that quantity is
+    written directly and the white-sky DISORT run and the albedo LUT are skipped.
+
     Parameters
     ----------
     output_dir : Union[str, Path]
         Directory path where the output NetCDF LUT files will be saved.
-    atm_lut : Union[str, Path]
-        Path to MODTRAN-like atmospheric NetCDF LUT file.
+    atm_lut : Optional[Union[str, Path]]
+        Path to MODTRAN-like atmospheric NetCDF LUT file. ``None`` produces the reflectance LUT only.
     cpu_cores : Optional[int], optional
         Number of CPU cores to use for parallel processing (default is 1).
     grain_shape : Optional[int], optional
@@ -61,6 +78,8 @@ def create_spires_lut(
         Maximum LAP concentration value in ppm (default is 4000.0).
     lap_points : Optional[int], optional
         Number of LAP concentration points (default is 10).
+    grain_radius_min, grain_radius_max, grain_radius_step : float, optional
+        Grain radius grid in um (default 30..1500 step 10, 148 points); see :func:`grain_radius_grid`.
     altitude_min : Optional[float], optional
         Minimum altitude in km (default is 0.0).
     altitude_max : Optional[float], optional
@@ -89,7 +108,8 @@ def create_spires_lut(
     Returns
     -------
     None
-        Saves 'spires_albedo_lut.nc' and 'spires_reflectance_lut.nc' to the specified output directory.
+        Saves 'spires_reflectance_lut.nc' and, when ``atm_lut`` is given, 'spires_albedo_lut.nc'
+        to the specified output directory.
     """
 
     # Create output if doesn't exist
@@ -99,37 +119,39 @@ def create_spires_lut(
     # Run dummy run to get wavelength and check OP data is downloaded
     _, _, _, _, wavelength = run_point()
 
-    # Load MODTRAN-like data and create interpolator object
-    m = xr.load_dataset(atm_lut)
-    solar_irr = m.solar_irr.values
-    wl = m.wl.values
-    transm_down_dir = (
-        m["transm_down_dir"]
-        .transpose("AOT550", "solar_zenith", "surface_elevation_km", "wl")
-        .values
-    )
-    transm_down_dif = (
-        m["transm_down_dif"]
-        .transpose("AOT550", "solar_zenith", "surface_elevation_km", "wl")
-        .values
-    )
-    grid_modtran = [
-        m["AOT550"].values,
-        m["solar_zenith"].values,
-        m["surface_elevation_km"].values,
-    ]
-    wl_mask = (wl >= 280.0) & (wl <= 4000.0)
-    wl, solar_irr = wl[wl_mask], solar_irr[wl_mask]
-    transm_down_dir, transm_down_dif = (
-        transm_down_dir[..., wl_mask],
-        transm_down_dif[..., wl_mask],
-    )
-    g_t_down_dir = VectorInterpolator(
-        grid_input=grid_modtran, data_input=transm_down_dir, version="mlg"
-    )
-    g_t_down_dif = VectorInterpolator(
-        grid_input=grid_modtran, data_input=transm_down_dif, version="mlg"
-    )
+    with_atmosphere = atm_lut is not None
+    if with_atmosphere:
+        # Load MODTRAN-like data and create interpolator object
+        m = xr.load_dataset(atm_lut)
+        solar_irr = m.solar_irr.values
+        wl = m.wl.values
+        transm_down_dir = (
+            m["transm_down_dir"]
+            .transpose("AOT550", "solar_zenith", "surface_elevation_km", "wl")
+            .values
+        )
+        transm_down_dif = (
+            m["transm_down_dif"]
+            .transpose("AOT550", "solar_zenith", "surface_elevation_km", "wl")
+            .values
+        )
+        grid_modtran = [
+            m["AOT550"].values,
+            m["solar_zenith"].values,
+            m["surface_elevation_km"].values,
+        ]
+        wl_mask = (wl >= 280.0) & (wl <= 4000.0)
+        wl, solar_irr = wl[wl_mask], solar_irr[wl_mask]
+        transm_down_dir, transm_down_dif = (
+            transm_down_dir[..., wl_mask],
+            transm_down_dif[..., wl_mask],
+        )
+        g_t_down_dir = VectorInterpolator(
+            grid_input=grid_modtran, data_input=transm_down_dir, version="mlg"
+        )
+        g_t_down_dif = VectorInterpolator(
+            grid_input=grid_modtran, data_input=transm_down_dif, version="mlg"
+        )
 
     # Grid resolution
     altitude = np.linspace(
@@ -141,7 +163,7 @@ def create_spires_lut(
         illumination_angle_points,
         dtype=np.float32,
     )
-    sqrt_grain_radius = np.sqrt(np.arange(30.0, 1500.001, 10.0, dtype=np.float32))
+    sqrt_grain_radius = np.sqrt(grain_radius_grid(grain_radius_min, grain_radius_max, grain_radius_step))
     dust_conc = np.linspace(lap_min, lap_max + 0.001, lap_points, dtype=np.float32)
     toa_sza = np.linspace(
         toa_sza_min, toa_sza_max + 0.001, toa_sza_points, dtype=np.float32
@@ -173,54 +195,55 @@ def create_spires_lut(
     reflectance_file = output_path / "spires_reflectance_lut.nc"
 
     # Create the outputs
-    xr.Dataset(
-        {
-            c.ALBEDO_LUT_VARIABLE: (
-                [
-                    "solar_zenith",
-                    "illumination_angle",
-                    "lap_concentration",
-                    "sqrt_grain_radius",
-                    "skyview",
-                    "altitude",
-                ],
-                np.zeros(shape_alb, dtype=np.float32),
-            )
-        },
-        coords={
-            "solar_zenith": xr.DataArray(
-                toa_sza,
-                dims=("solar_zenith",),
-                attrs={"units": c.LUT_AXIS_UNITS["solar_zenith"]},
-            ),
-            "illumination_angle": xr.DataArray(
-                illumination_angle,
-                dims=("illumination_angle",),
-                attrs={"units": c.LUT_AXIS_UNITS["illumination_angle"]},
-            ),
-            "lap_concentration": xr.DataArray(
-                dust_conc,
-                dims=("lap_concentration",),
-                attrs={
-                    "units": c.LUT_AXIS_UNITS["lap_concentration"],
-                    "lap_type": "dust",
-                },
-            ),
-            "sqrt_grain_radius": xr.DataArray(
-                sqrt_grain_radius,
-                dims=("sqrt_grain_radius",),
-                attrs={"units": c.LUT_AXIS_UNITS["sqrt_grain_radius"]},
-            ),
-            "altitude": xr.DataArray(
-                altitude,
-                dims=("altitude",),
-                attrs={"units": c.LUT_AXIS_UNITS["altitude"]},
-            ),
-            "skyview": xr.DataArray(
-                svf, dims=("skyview",), attrs={"units": c.LUT_AXIS_UNITS["skyview"]}
-            ),
-        },
-    ).to_netcdf(albedo_file)
+    if with_atmosphere:
+        xr.Dataset(
+            {
+                c.ALBEDO_LUT_VARIABLE: (
+                    [
+                        "solar_zenith",
+                        "illumination_angle",
+                        "lap_concentration",
+                        "sqrt_grain_radius",
+                        "skyview",
+                        "altitude",
+                    ],
+                    np.zeros(shape_alb, dtype=np.float32),
+                )
+            },
+            coords={
+                "solar_zenith": xr.DataArray(
+                    toa_sza,
+                    dims=("solar_zenith",),
+                    attrs={"units": c.LUT_AXIS_UNITS["solar_zenith"]},
+                ),
+                "illumination_angle": xr.DataArray(
+                    illumination_angle,
+                    dims=("illumination_angle",),
+                    attrs={"units": c.LUT_AXIS_UNITS["illumination_angle"]},
+                ),
+                "lap_concentration": xr.DataArray(
+                    dust_conc,
+                    dims=("lap_concentration",),
+                    attrs={
+                        "units": c.LUT_AXIS_UNITS["lap_concentration"],
+                        "lap_type": "dust",
+                    },
+                ),
+                "sqrt_grain_radius": xr.DataArray(
+                    sqrt_grain_radius,
+                    dims=("sqrt_grain_radius",),
+                    attrs={"units": c.LUT_AXIS_UNITS["sqrt_grain_radius"]},
+                ),
+                "altitude": xr.DataArray(
+                    altitude,
+                    dims=("altitude",),
+                    attrs={"units": c.LUT_AXIS_UNITS["altitude"]},
+                ),
+                "skyview": xr.DataArray(
+                    svf, dims=("skyview",), attrs={"units": c.LUT_AXIS_UNITS["skyview"]}
+                ),
+            },
+        ).to_netcdf(albedo_file)
 
     xr.Dataset(
         {
@@ -261,18 +284,12 @@ def create_spires_lut(
         )
     )
 
-    # Group all parameters from the albedo table
-    full_grid = list(
-        product(
-            enumerate(altitude),
-            enumerate(sqrt_grain_radius),
-            enumerate(dust_conc),
-            enumerate(toa_sza),
-            enumerate(illumination_angle),
-            enumerate(svf),
-        )
+    # Points in the albedo table; each DISORT surface point serves many of them
+    total_sims = (
+        len(altitude) * len(toa_sza) * len(svf) * len(disort_surface_grid)
+        if with_atmosphere
+        else len(disort_surface_grid)
     )
-    total_sims = len(full_grid)
 
     # then we batch them, so that disort rfl can be reused in the portions of the lut
     batch_size = 50
@@ -308,7 +325,12 @@ def create_spires_lut(
                 snow_density=[300.0],  # kg /m3
                 dz=[100.0],  # 100 m -> optically deep
                 n_layers=1,  # 1 = single layer snowpack
+                white_sky=with_atmosphere,
             )
+
+            if not with_atmosphere:
+                batch_output.append(((0, grain_idx, dust_idx, 0, ill_idx, 0), None, rho_dir_dif))
+                continue
 
             # Evaluate all atmospheric variations (altitude, toa_sza, svf) for this point
             for alt_idx, alt in enumerate(altitude):
@@ -381,27 +403,28 @@ def create_spires_lut(
 
         return batch_output
 
-    with (
-        xr.open_dataset(albedo_file, mode="a") as ds_alb,
-        xr.open_dataset(reflectance_file, mode="a") as ds_rfl,
-    ):
-        results = Parallel(n_jobs=cpu_cores)(
-            delayed(process_surface_batch)(batch) for batch in surface_batches
-        )
+    results = Parallel(n_jobs=cpu_cores)(
+        delayed(process_surface_batch)(batch) for batch in surface_batches
+    )
 
+    ds_alb = xr.open_dataset(albedo_file, mode="a") if with_atmosphere else None
+    with xr.open_dataset(reflectance_file, mode="a") as ds_rfl:
         for batch_res in results:
             for indices, albedo, rfl in batch_res:
                 alt_idx, grain_idx, dust_idx, sza_idx, ill_idx, svf_idx = indices
-                ds_alb["albedo"][
-                    sza_idx, ill_idx, dust_idx, grain_idx, svf_idx, alt_idx
-                ] = albedo.astype(np.float32)
+                if albedo is not None:
+                    ds_alb["albedo"][
+                        sza_idx, ill_idx, dust_idx, grain_idx, svf_idx, alt_idx
+                    ] = albedo.astype(np.float32)
                 if rfl is not None:
                     ds_rfl["reflectance"][:, ill_idx, dust_idx, grain_idx] = rfl.astype(
                         np.float32
                     )
 
-        ds_alb.to_netcdf(albedo_file, mode="a")
         ds_rfl.to_netcdf(reflectance_file, mode="a")
+    if ds_alb is not None:
+        with ds_alb:
+            ds_alb.to_netcdf(albedo_file, mode="a")
 
     return
 
@@ -419,12 +442,16 @@ def run_point(
     snow_density: List[float] = [150.0, 300.0, 300.0],
     dz: List[float] = [0.01, 0.1, 5.0],
     lap_type: str = "dust_skiles_size3",
-) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]:
+    white_sky: bool = True,
+) -> Tuple[npt.NDArray, Optional[npt.NDArray], npt.NDArray, Optional[npt.NDArray], npt.NDArray]:
     """
 
     Entry point for the DISORT model for testing and/or for LUT building.
 
     e.g., see, create_spires_lut() - although there are many ways you can choose to grid/interpret this model.
+
+    Returns (rho_dir_dir, rho_dif_dir, rho_dir_dif, rho_dif_dif, wavelength_nm). With
+    white_sky=False the diffuse-illumination DISORT run is skipped and both *_dif_* terms are None.
 
     sza:             solar zenith angle (degrees)
     vza:             view zenith angle (degrees)
@@ -468,6 +495,9 @@ def run_point(
     # Run black sky
     model = DISORT(**cfg)
     rho_dir_dir, rho_dir_dif, wvl = model.run()
+
+    if not white_sky:
+        return rho_dir_dir, None, rho_dir_dif, None, wvl * 1000.0
 
     # Update config and run white sky
     cfg["e_dir"] = 0.0

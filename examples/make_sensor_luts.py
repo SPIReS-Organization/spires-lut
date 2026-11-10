@@ -12,7 +12,8 @@ The albedo LUT is broadband and sensor-independent; it is left where simulate.py
 Pass --hyperspectral <dir> to skip DISORT and reuse an existing run.
 
 Example:
-    python examples/make_sensor_luts.py --atm-lut /path/to/atm.nc --out /data/spires/luts --cores 16
+    python examples/make_sensor_luts.py --out /data/spires/luts --cores 16
+    python examples/make_sensor_luts.py --atm-lut /path/to/atm.nc --out /data/spires/luts --cores 16  # + albedo LUT
 """
 from __future__ import annotations
 
@@ -29,7 +30,7 @@ DEFAULT_SENSORS = ["OLI", "OLI2", "MSI", "HLSL30", "HLSS30", "HLSS30-msi", "MODI
 log = logging.getLogger("make_sensor_luts")
 
 
-def run_disort(out_dir: Path, atm_lut: Path, lap_type: str, cores: int) -> Path:
+def run_disort(out_dir: Path, atm_lut: Path | None, lap_type: str, cores: int) -> Path:
     from spires_lut.simulate import create_spires_lut   # imports the compiled disort extension
 
     hs_dir = out_dir / "hyperspectral" / lap_type
@@ -44,7 +45,9 @@ def run_disort(out_dir: Path, atm_lut: Path, lap_type: str, cores: int) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--atm-lut", type=Path, help="MODTRAN-like atmospheric LUT (required unless --hyperspectral)")
+    ap.add_argument("--atm-lut", type=Path,
+                    help="MODTRAN-like atmospheric LUT; without it the broadband albedo LUT is skipped and the "
+                         "reflectance LUT is the black-sky DHR (what simulate.py stores anyway)")
     ap.add_argument("--hyperspectral", type=Path, help="existing dir holding spires_reflectance_lut.nc; skips DISORT")
     ap.add_argument("--lap-type", default="dust_skiles_size3",
                     help="DISORT lap optical-property stem; also names the output files (default: dust_skiles_size3)")
@@ -55,8 +58,6 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.INFO, format="%(asctime)s %(message)s")
 
     if a.hyperspectral is None:
-        if a.atm_lut is None:
-            ap.error("--atm-lut is required unless --hyperspectral is given")
         hs_dir = run_disort(a.out, a.atm_lut, a.lap_type, a.cores)
     else:
         hs_dir = a.hyperspectral

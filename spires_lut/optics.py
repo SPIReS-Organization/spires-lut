@@ -96,7 +96,7 @@ def snow_lap_mixture(
     ssps_water = np.load(OP_DIR / "luts" / "water_sphere.npz")
     ssps_lap = np.load(OP_DIR / "lap.npz")
 
-    wavelength_um = OP_WAVELENGTH_UM
+    wavelength_um = OP_WAVELENGTH_UM.copy()  # frozen dataclass does not freeze the array; don't alias the module constant
     nbr_wvl = len(wavelength_um)
 
     # set up empty arrays
@@ -317,14 +317,11 @@ def snow_lap_mixture(
     MAC_lap = np.zeros([nbr_lap, nbr_wvl])
     g_lap = np.zeros([nbr_lap, nbr_wvl])
 
-    # skip the first ten wavelengths for now as we have different shapes for the ice optical properties
+    # drop the same leading WVL_THRESHOLD bands as for the ice optical properties
     for ii, stem in enumerate(lap_stems):
         SSA_lap[ii, :] = ssps_lap[f"{stem}__ss_alb"][WVL_THRESHOLD:]
         MAC_lap[ii, :] = ssps_lap[f"{stem}__ext_cff_mss"][WVL_THRESHOLD:]
         g_lap[ii, :] = ssps_lap[f"{stem}__asm_prm"][WVL_THRESHOLD:]
-
-    # resample wavelength grid of LAP optical properties to given instrument wavelengths
-    # Not needed for this application
 
     # initialize arrays
     L_snw = np.zeros(nbr_lyr)

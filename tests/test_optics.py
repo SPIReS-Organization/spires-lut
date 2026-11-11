@@ -1,4 +1,6 @@
 """snow_lap_mixture: shapes, ranges and the physics every engine depends on. Needs the OP data."""
+import dataclasses
+
 import numpy as np
 import pytest
 
@@ -47,7 +49,7 @@ def test_larger_grain_lowers_nir_ssa():
 
 def test_mixture_is_frozen():
     m = _mix()
-    with pytest.raises(Exception):
+    with pytest.raises(dataclasses.FrozenInstanceError):
         m.tau = None  # type: ignore[misc]
 
 

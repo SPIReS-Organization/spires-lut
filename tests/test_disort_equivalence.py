@@ -1,4 +1,6 @@
 """The DISORT wrapper must see exactly the mixture optics.snow_lap_mixture returns."""
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -34,3 +36,19 @@ def test_disort_attributes_equal_snow_lap_mixture():
     np.testing.assert_array_equal(model.wvl, mix.wavelength_um)
     assert model.DTAUC is model.tau and model.SSALB is model.SSA   # multi-stream: no delta-scaling
     assert mix.ssa.shape == (3, 475)
+
+
+def test_mixture_matches_pre_refactor_golden():
+    """Arrays recorded from DISORT.__init__ at commit 182476a (before the mixture moved to optics)."""
+    golden = np.load(Path(__file__).parent / "data" / "mixture_golden_3layer_182476a.npz")
+    mix = optics.snow_lap_mixture(**{**THREE_LAYER, "lw_frac": list(THREE_LAYER["lw_frac"])})
+    np.testing.assert_array_equal(mix.ssa, golden["ssa"])
+    np.testing.assert_array_equal(mix.g, golden["g"])
+    np.testing.assert_array_equal(mix.tau, golden["tau"])
+    np.testing.assert_array_equal(mix.wavelength_um, golden["wvl"])
+
+
+def test_disort_rejects_layer_count_mismatch():
+    with pytest.raises(ValueError, match="nbr_lyr"):
+        DISORT(sza=30.0, saa=0.0, vza=0.0, vaa=0.0, e_dir=1.0, e_dif=0.0, nbr_lyr=2,
+               **{**THREE_LAYER, "lw_frac": list(THREE_LAYER["lw_frac"])})

@@ -78,6 +78,10 @@ class DISORT(object):
         self.dir_base = OP_DIR
         self.wvl_threshold = WVL_THRESHOLD
 
+        # snow_lap_mixture sizes its layers from rds_snw; a mismatch would reach disort as a wrong-length DTAUC
+        if len(rds_snw) != nbr_lyr:
+            raise ValueError(f"nbr_lyr={nbr_lyr} but len(rds_snw)={len(rds_snw)}")
+
         mix = snow_lap_mixture(
             rds_snw=rds_snw,
             rho_snw=rho_snw,

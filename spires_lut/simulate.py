@@ -8,7 +8,15 @@ import numpy.typing as npt
 
 from spires_lut.common import VectorInterpolator
 from spires_lut.disort_wrapper import DISORT
+from spires_lut import two_stream
 from spires_contract import conventions as c
+
+# Engines resolve their point function at call time (not import time) so that tests can
+# monkeypatch ``simulate.run_point`` / ``two_stream.run_point`` and still hit the stub.
+_POINT_FUNCTIONS = {
+    "disort": lambda: run_point,
+    "delta_eddington": lambda: two_stream.run_point,
+}
 
 
 def grain_radius_grid(
@@ -44,6 +52,7 @@ def create_spires_lut(
     svf_min: Optional[float] = 1e-3,
     svf_max: Optional[float] = 1.0,
     svf_points: Optional[int] = 5,
+    engine: str = "disort",
 ) -> None:
     """
     Generate SPIReS broadband blue-sky albedo and spectral reflectance lookup tables (LUTs)
@@ -104,6 +113,13 @@ def create_spires_lut(
         Maximum sky view factor (default is 1.0).
     svf_points : Optional[int], optional
         Number of sky view factor points (default is 5).
+    engine : str, optional
+        Surface radiative-transfer engine for the reflectance LUT: ``"disort"`` (default,
+        multi-stream, ~130 s per grid point) or ``"delta_eddington"`` (closed-form two-stream,
+        ~0.15 ms per grid point, i.e. seconds for the production grid; black-sky DHR of
+        layer 0 only). ``"delta_eddington"``
+        cannot be combined with ``atm_lut`` because the broadband albedo LUT is DISORT-only.
+        The reflectance dataset records the choice in its ``surface_model`` attribute.
 
     Returns
     -------
@@ -112,12 +128,18 @@ def create_spires_lut(
         to the specified output directory.
     """
 
+    if engine not in _POINT_FUNCTIONS:
+        raise ValueError(f"engine must be one of {sorted(_POINT_FUNCTIONS)}, got {engine!r}")
+    if engine == "delta_eddington" and atm_lut is not None:
+        raise ValueError("engine='delta_eddington' cannot build the albedo LUT; pass atm_lut=None")
+    point_fn = _POINT_FUNCTIONS[engine]()
+
     # Create output if doesn't exist
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
     # Run dummy run to get wavelength and check OP data is downloaded
-    _, _, _, _, wavelength = run_point()
+    _, _, _, _, wavelength = point_fn()
 
     with_atmosphere = atm_lut is not None
     if with_atmosphere:
@@ -273,6 +295,7 @@ def create_spires_lut(
                 attrs={"units": c.LUT_AXIS_UNITS["sqrt_grain_radius"]},
             ),
         },
+        attrs={"surface_model": engine},
     ).to_netcdf(reflectance_file)
 
     # Group by params where rfl vary (DISORT sims)
@@ -304,7 +327,7 @@ def create_spires_lut(
         batch_output = []
         for (ill_idx, ill_angle_val), (grain_idx, sq_r), (dust_idx, d) in batch:
 
-            # Calls DISORT
+            # Calls the selected engine (DISORT or delta-Eddington)
             # NOTE here we are using the rho_dir_dif and rho_dif_dif - this was a choice..
             # This is essentially the black and white sky albedos.
             # We could alternatively use the dir_dir and dif_dir for more directional-like quantities.
@@ -312,7 +335,7 @@ def create_spires_lut(
 
             # We could also choose to save all 4 of these raw rfl defnitions, but at least for the moment for SPIReS it
             # doesn't seem very useful
-            _, _, rho_dir_dif, rho_dif_dif, _ = run_point(
+            _, _, rho_dir_dif, rho_dif_dif, _ = point_fn(
                 sza=ill_angle_val,
                 vza=0.0,  # VZA assumed to be zero
                 raa=0.0,  # RAA assumed to not matter

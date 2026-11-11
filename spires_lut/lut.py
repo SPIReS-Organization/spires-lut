@@ -70,6 +70,7 @@ def build_sensor_lut(hyperspectral: xr.Dataset, sensor: Sensor, source: str = ""
         "srf_source": sensor.srf_source,
         "srf_response_kind": kinds[0] if len(kinds) == 1 else ",".join(kinds),
         "lap_type": lap_type,
+        "surface_model": hyperspectral.attrs.get("surface_model", "unknown"),
         "spires_lut_version": _VERSION,
         "created": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
         "source_hyperspectral_lut": source or hyperspectral.encoding.get("source", ""),

@@ -68,4 +68,5 @@ def test_delta_eddington_tracks_disort_at_one_point():
     band = (wl_d >= 400.0) & (wl_d <= 2500.0)
     max_abs = float(np.max(np.abs(r_de[band] - r_disort[band])))
     print(f"\nmax |delta-Eddington - DISORT| over 400-2500 nm: {max_abs:.4f}")
+    # observed 2026-11-11: 0.0142 (sphere, 300 um, SZA 30, clean, 400-2500 nm)
     assert max_abs < 0.03

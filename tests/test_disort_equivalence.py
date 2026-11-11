@@ -52,3 +52,20 @@ def test_disort_rejects_layer_count_mismatch():
     with pytest.raises(ValueError, match="nbr_lyr"):
         DISORT(sza=30.0, saa=0.0, vza=0.0, vaa=0.0, e_dir=1.0, e_dif=0.0, nbr_lyr=2,
                **{**THREE_LAYER, "lw_frac": list(THREE_LAYER["lw_frac"])})
+
+
+def test_delta_eddington_tracks_disort_at_one_point():
+    """One 2 s DISORT run vs the closed form; tolerance to be tightened once the gap is known."""
+    from spires_lut import simulate, two_stream
+
+    point = dict(sza=30.0, vza=0.0, raa=0.0, n_layers=1, grain_shape=1, grain_radius=[300.0],
+                 lap_concentration=[0.0], algae_concentration=[0.0], lwc=[0.0], snow_density=[300.0],
+                 dz=[100.0], lap_type="dust_skiles_size3")
+    _, _, r_disort, _, wl_d = simulate.run_point(white_sky=False, **point)
+    _, _, r_de, _, wl_t = two_stream.run_point(**point)
+
+    np.testing.assert_array_equal(wl_d, wl_t)
+    band = (wl_d >= 400.0) & (wl_d <= 2500.0)
+    max_abs = float(np.max(np.abs(r_de[band] - r_disort[band])))
+    print(f"\nmax |delta-Eddington - DISORT| over 400-2500 nm: {max_abs:.4f}")
+    assert max_abs < 0.03

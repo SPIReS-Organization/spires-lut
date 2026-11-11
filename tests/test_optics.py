@@ -56,3 +56,36 @@ def test_mixture_is_frozen():
 def test_invalid_grain_radius_raises():
     with pytest.raises(ValueError, match="Grain size"):
         _mix(rds=300.5)
+
+
+def test_two_stream_run_point_spectrum():
+    from spires_lut import two_stream
+
+    rho_dir_dir, rho_dif_dir, rho_dir_dif, rho_dif_dif, wl_nm = two_stream.run_point(
+        sza=30.0, grain_radius=[300.0], lap_concentration=[0.0], white_sky=False)
+    assert rho_dir_dir is None and rho_dif_dir is None and rho_dif_dif is None
+    assert wl_nm.shape == (475,) and wl_nm[0] == pytest.approx(255.0) and wl_nm[-1] == pytest.approx(4995.0)
+    assert rho_dir_dif.shape == (475,)
+    assert np.all((rho_dir_dif > 0) & (rho_dir_dif <= 1))
+    vis = (wl_nm >= 400) & (wl_nm <= 700)
+    swir = (wl_nm >= 1500) & (wl_nm <= 2500)
+    assert rho_dir_dif[vis].mean() > 0.9 > rho_dir_dif[swir].mean()
+
+
+def test_two_stream_run_point_ignores_view_geometry_and_does_not_mutate_inputs():
+    from spires_lut import two_stream
+
+    lwc = [10.0]
+    a = two_stream.run_point(sza=45.0, vza=15.0, raa=90.0, lwc=lwc)[2]
+    b = two_stream.run_point(sza=45.0, vza=0.0, raa=0.0, lwc=lwc)[2]
+    np.testing.assert_array_equal(a, b)
+    assert lwc == [10.0]
+
+
+def test_two_stream_run_point_guards():
+    from spires_lut import two_stream
+
+    with pytest.raises(ValueError, match="n_layers"):
+        two_stream.run_point(n_layers=2, grain_radius=[300.0, 300.0])
+    with pytest.raises(ValueError, match="dust"):
+        two_stream.run_point(lap_type="snow_algae_empirical_Chevrollier2023")

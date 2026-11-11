@@ -43,6 +43,13 @@ def test_attrs_record_provenance(hyperspectral_lut):
         assert key in out.attrs, key
     assert out.attrs["srf_response_kind"] == "gaussian"
     assert out.attrs["source_hyperspectral_lut"] == "synthetic.nc"
+    assert out.attrs["surface_model"] == "unknown"   # fixture carries no engine stamp
+
+
+def test_attrs_propagate_surface_model(hyperspectral_lut):
+    stamped = hyperspectral_lut.assign_attrs(surface_model="delta_eddington")
+    out = build_sensor_lut(stamped, get_sensor("OLI"), source="x.nc")
+    assert out.attrs["surface_model"] == "delta_eddington"
 
 
 def test_rejects_dataset_without_wavelength_band(hyperspectral_lut):

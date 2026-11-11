@@ -9,8 +9,9 @@ sensor:
     <out>/hyperspectral/<lap_type>-delta-eddington/spires_reflectance_lut.nc (--engine delta-eddington)
     <out>/spires_reflectance_lut_<sensor>_<lap_type>.nc
 
-DISORT is expensive (hours on one core, use --cores); delta-Eddington runs the grid in seconds
-and serves as a stand-in and as a DISORT cross-check (examples/compare_engines.py). Sensor LUT
+DISORT is expensive (hours on one core, use --cores); delta-Eddington runs the whole grid in
+seconds (~0.15 ms per point) and serves as a stand-in and as a DISORT cross-check
+(examples/compare_engines.py). Sensor LUT
 filenames do not encode the engine: to build both sets, use two different --out directories
 (the refuse-to-overwrite guard stops silent mixing).
 
@@ -71,7 +72,7 @@ def main() -> None:
     ap.add_argument("--cores", type=int, default=1)
     ap.add_argument("--engine", choices=ENGINES, default="disort",
                     help="surface RT engine for the hyperspectral LUT (default: disort); delta-eddington is a "
-                         "seconds-fast closed form, reflectance only, cannot be combined with --atm-lut")
+                         "closed form that runs the grid in seconds, reflectance only, cannot be combined with --atm-lut")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.INFO, format="%(asctime)s %(message)s")

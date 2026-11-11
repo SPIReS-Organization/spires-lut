@@ -9,6 +9,7 @@ constants; water spheres; LAPs), downloaded once into ``OP_DIR``.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -34,6 +35,28 @@ def get_optical_property_data() -> None:
         registry={"3.0.zip": "sha256:1a25a07a57d622614635ff650ccf53a6a81b1534dc53b17ba1acd3a57609838e"},
         env="LUT_DATA_DIR").fetch("3.0.zip", processor=pooch.Unzip())
     return
+
+
+@lru_cache(maxsize=1)
+def _load_optical_property_tables() -> tuple:
+    """Ice-sphere, water-sphere and LAP Mie tables (~50 MB), read once per process.
+
+    Each ``np.load`` of the npz archives costs ~190 ms; a LUT grid calls the mixture
+    tens of thousands of times, so the arrays are materialised and held in memory.
+    """
+    # If dir doesn't exist get the data
+    if not OP_DIR.exists():
+        get_optical_property_data()
+
+    def materialise(path: Path) -> dict:
+        with np.load(path) as npz:
+            return {key: npz[key] for key in npz.files}
+
+    return (
+        materialise(OP_DIR / "luts" / "ice_sphere_Pic16.npz"),
+        materialise(OP_DIR / "luts" / "water_sphere.npz"),
+        materialise(OP_DIR / "lap.npz"),
+    )
 
 
 @dataclass(frozen=True)
@@ -87,14 +110,7 @@ def snow_lap_mixture(
     """
     nbr_lyr = len(rds_snw)
 
-    # If dir doesn't exist get the data
-    if not OP_DIR.exists():
-        get_optical_property_data()
-
-    # Load OPs
-    ssps_ice = np.load(OP_DIR / "luts" / "ice_sphere_Pic16.npz")
-    ssps_water = np.load(OP_DIR / "luts" / "water_sphere.npz")
-    ssps_lap = np.load(OP_DIR / "lap.npz")
+    ssps_ice, ssps_water, ssps_lap = _load_optical_property_tables()
 
     wavelength_um = OP_WAVELENGTH_UM.copy()  # frozen dataclass does not freeze the array; don't alias the module constant
     nbr_wvl = len(wavelength_um)

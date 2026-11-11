@@ -116,7 +116,8 @@ def create_spires_lut(
     engine : str, optional
         Surface radiative-transfer engine for the reflectance LUT: ``"disort"`` (default,
         multi-stream, ~130 s per grid point) or ``"delta_eddington"`` (closed-form two-stream,
-        seconds for the whole grid, black-sky DHR of layer 0 only). ``"delta_eddington"``
+        ~0.15 ms per grid point, i.e. seconds for the production grid; black-sky DHR of
+        layer 0 only). ``"delta_eddington"``
         cannot be combined with ``atm_lut`` because the broadband albedo LUT is DISORT-only.
         The reflectance dataset records the choice in its ``surface_model`` attribute.
 

@@ -47,7 +47,9 @@ py.install_sources(
     'spires_lut/disort_wrapper.py',
     'spires_lut/io.py',
     'spires_lut/lut.py',
+    'spires_lut/optics.py',
     'spires_lut/simulate.py',
+    'spires_lut/two_stream.py',
   ],
   subdir: 'spires_lut',
 )

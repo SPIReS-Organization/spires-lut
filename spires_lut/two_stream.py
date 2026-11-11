@@ -20,7 +20,8 @@ def delta_eddington_albedo(ssa: npt.ArrayLike, g: npt.ArrayLike, mu0: npt.ArrayL
     ``ssa`` (single-scattering albedo), ``g`` (asymmetry parameter) and ``mu0`` (cosine of the
     solar zenith angle) broadcast against each other. The optical depth drops out for a
     semi-infinite layer. ``ssa`` is clipped to [0, 1] and ``g`` to [0, 0.99] (the ceiling
-    ``spires_lut.optics`` applies), so bad input yields a finite value rather than NaN.
+    ``spires_lut.optics`` applies), so out-of-range ``ssa``/``g`` yield a finite value rather than NaN. ``mu0`` is not
+    checked; callers pass cos(SZA) for SZA in [0, 90).
     ssa == 1 returns exactly 1.
     """
     w = np.clip(np.asarray(ssa, dtype=float), 0.0, 1.0)

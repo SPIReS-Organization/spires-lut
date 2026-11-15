@@ -56,6 +56,9 @@ def test_real_srf_weights_sum_to_one_and_centre_near_published(name):
 
 
 def test_landsat10_excludes_tir_and_covers_snow_bands():
-    names = {b.long_name for b in get_sensor("LANDSAT10").bands}
+    bands = get_sensor("LANDSAT10").bands
+    # 21 VSWIR bands only; Landsat 10 also carries 5 TIR bands, which the LUT spec must not include
+    assert len(bands) == 21
+    assert all(b.center_nm < 8000.0 for b in bands), [b.name for b in bands if b.center_nm >= 8000.0]
+    names = {b.long_name for b in bands}
     assert "snow/ice 1" in names and "snow/ice 2" in names
-    assert not any(n.startswith("TIR") for n in names)

@@ -1,7 +1,9 @@
 """Band-average hyperspectral reflectance onto sensor bands.
 
 Band reflectance is R_b = sum_i R(lambda_i) w_bi with w_bi the band response
-integrated over the i-th bin of the input wavelength grid and normalised to sum to 1.
+integrated over the i-th bin of the input wavelength grid, divided by the band's full
+response integral. Weights therefore sum to the in-grid fraction of the response: 1.0 for a
+band wholly on the grid, and never below ``MIN_IN_GRID_RESPONSE_FRACTION`` (else an error).
 Responses are resampled *down* to the grid (bin edges midway between neighbouring
 centres, i.e. +/-5 nm on the 10 nm DISORT grid); reflectance is never interpolated
 up to 1 nm, because that would invent spectral structure DISORT never computed.
@@ -33,6 +35,10 @@ from spires_lut.sensors.model import Band, Sensor
 
 # Mirrors disort_wrapper.py:103-105 (np.arange(205, 4995.0001, 10) sliced from index 5).
 DISORT_GRID_NM = np.arange(255.0, 4995.0001, 10.0)
+
+# Smallest share of a band's response integral that may fall inside the wavelength grid.
+# Below this the band is too far off-grid for its weights to represent the sensor band.
+MIN_IN_GRID_RESPONSE_FRACTION = 0.99
 
 _SIGMA_PER_FWHM = 1.0 / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
@@ -88,22 +94,33 @@ def band_weights(band: Band, grid_nm) -> np.ndarray:
     if band.response == "srf":
         wl, resp = srf_curve(band)
         raw = _integrate_curve(wl, resp, lo, hi)
+        full = float(cumulative_trapezoid(resp, wl, initial=0.0)[-1])
     elif band.response == "tophat":
         raw = _integrate_tophat(band.lower_nm, band.upper_nm, lo, hi)
+        full = band.upper_nm - band.lower_nm
     else:
         raw = _integrate_gaussian(band.center_nm, band.fwhm_nm, lo, hi)
-    total = raw.sum()
-    if not total > 0:
-        src = f" from {band.srf_file}" if band.response == "srf" else ""
+        full = 1.0  # a normalised Gaussian integrates to 1 over the whole real line
+    src = f" from {band.srf_file}" if band.response == "srf" else ""
+    in_grid = raw.sum()
+    if not (in_grid > 0 and full > 0):
         raise ValueError(
             f"band {band.name!r}{src}: response has no overlap with the "
             f"{grid[0]:.0f}-{grid[-1]:.0f} nm wavelength grid"
         )
-    return raw / total
+    fraction = in_grid / full
+    if fraction < MIN_IN_GRID_RESPONSE_FRACTION:
+        raise ValueError(
+            f"band {band.name!r}{src}: only {100 * fraction:.2f}% of its response lies within the "
+            f"{grid[0]:.0f}-{grid[-1]:.0f} nm wavelength grid "
+            f"(minimum {100 * MIN_IN_GRID_RESPONSE_FRACTION:.0f}%)"
+        )
+    # Divided by the full response integral, so the weights sum to the in-grid fraction.
+    return raw / full
 
 
 def sensor_weights(sensor: Sensor, grid_nm) -> np.ndarray:
-    """(band, grid) weight matrix; raises ValueError naming any band without coverage."""
+    """(band, grid) weight matrix; raises ValueError naming any band with too little coverage."""
     return np.stack([band_weights(b, grid_nm) for b in sensor.bands])
 
 

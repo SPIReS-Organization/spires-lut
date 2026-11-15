@@ -135,7 +135,7 @@ curves_from = "OLI"
 rename = { B1 = "B01", B2 = "B02", B3 = "B03", B4 = "B04", B5 = "B8A", B6 = "B11", B7 = "B12" }
 
 # HLS S30 as "what the detector saw": MSI (S2A) curves under the S30 codes. Registered
-# alongside HLSS30 so spires-36c can quantify how much the choice matters.
+# alongside HLSS30 so the effect of the choice can be quantified.
 [sensors."HLSS30-msi"]
 platform = "Sentinel-2A (HLS S30, native MSI curves)"
 curves_from = "MSI"

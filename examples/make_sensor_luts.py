@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Produce the SPIReS sensor reflectance LUTs for the AGU26 poster sprint (bead spires-kor).
+"""Produce the SPIReS sensor reflectance LUTs for every registered sensor.
 
 Runs the surface RT engine once per LAP type on the production grid, then band-averages the
 hyperspectral result onto every requested sensor and writes one contract-validated netCDF per
@@ -19,9 +19,9 @@ The albedo LUT is broadband and sensor-independent; it is left where simulate.py
 Pass --hyperspectral <dir> to skip the engine run and reuse an existing one.
 
 Example:
-    python examples/make_sensor_luts.py --out /data/spires/luts --cores 16
-    python examples/make_sensor_luts.py --atm-lut /path/to/atm.nc --out /data/spires/luts --cores 16  # + albedo LUT
-    python examples/make_sensor_luts.py --engine delta-eddington --out /data/spires/luts-de
+    python examples/make_sensor_luts.py --out luts --cores 16
+    python examples/make_sensor_luts.py --atm-lut /path/to/atm.nc --out luts --cores 16  # + albedo LUT
+    python examples/make_sensor_luts.py --engine delta-eddington --out luts-de
 """
 from __future__ import annotations
 

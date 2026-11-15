@@ -3,7 +3,7 @@ import sys
 import types
 
 try:
-    import disort  # noqa: F401  compiled extension, not built in spipy14
+    import disort  # noqa: F401  compiled extension, may not be built
 except ImportError:
     # spires_lut/pyrt/__init__.py eagerly imports surface.py, which does
     # `from disort import disobrdf`. aerosol.py never touches disort, so a

@@ -6,7 +6,7 @@
 Prints mean bias (B - A), RMSE and max |B - A| overall, per spectral region (VIS 400-700,
 NIR 700-1400, SWIR 1400-2500 nm) and per solar angle. Exits 2 if the coordinate grids differ.
 Because both engines share every optical constant (spires_lut.optics), the numbers isolate the
-solver approximation — this is the DISORT validation the second engine buys us (bead spires-dvc).
+solver approximation — this is the DISORT validation the second engine buys us.
 """
 from __future__ import annotations
 

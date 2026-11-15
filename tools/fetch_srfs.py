@@ -6,9 +6,12 @@ bands.toml. Requires ``openpyxl`` (``pip install spires-lut[tools]``). Network
 access to usgs.gov, copernicus.eu and gsfc.nasa.gov is needed; usgs.gov rejects
 requests without a browser User-Agent.
 
-Output CSVs are long format, ``band, wavelength_nm, response``, on the agencies'
-native 1 nm grid, keeping only rows with response > 1e-4, each prefixed with a
-``#`` provenance header. Band centres written to bands.toml are the
+Output CSVs are long format, ``band, wavelength_nm, response``, each prefixed with a
+``#`` provenance header. Landsat OLI/OLI-2 and Sentinel-2 MSI curves are published
+on a 1 nm grid and are written as such. MODIS in-band RSR is written on the
+instrument's own irregular grid (roughly 0.01-7 nm spacing, detector channels
+averaged per wavelength). Responses are peak-normalised, and rows with response
+<= 1e-4 are dropped. Band centres written to bands.toml are the
 response-weighted mean wavelength of each curve; FWHM is the width at half of the
 curve's peak.
 
@@ -102,11 +105,12 @@ def centre_fwhm(df: pd.DataFrame) -> tuple[float, float]:
 
 
 def write_csv(path: Path, frames: dict[str, pd.DataFrame], url: str, doc: str, today: str) -> None:
-    header = f"# source: {url}\n# document: {doc}\n# retrieved: {today}\n# columns: band, wavelength_nm, response (peak-normalised, 1 nm)\n"
+    header = f"# source: {url}\n# document: {doc}\n# retrieved: {today}\n# columns: band, wavelength_nm, response (peak-normalised; wavelength grid as published)\n"
     out = pd.concat([f.assign(band=b)[["band", "wavelength_nm", "response"]] for b, f in frames.items()])
     with path.open("w", newline="") as fh:
         fh.write(header)
-        out.to_csv(fh, index=False, float_format="%.6g")
+        # %.6g keeps only 3 decimals for wavelengths in the hundreds of nm, so source wavelengths closer than 0.001 nm would become identical rows
+        out.to_csv(fh, index=False, float_format="%.10g")
 
 
 def toml_sensor(name, platform, csv, url, doc, today, rows) -> str:

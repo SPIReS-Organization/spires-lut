@@ -1,26 +1,11 @@
 """Tests for the interpolation helpers in spires_lut.pyrt.aerosol."""
-import sys
-import types
-
 import numpy as np
 import pytest
 
 
 @pytest.fixture
-def interpolator(monkeypatch):
-    """Return ``_Interpolator``, with a placeholder ``disort`` module if the extension is not built.
-
-    spires_lut/pyrt/__init__.py eagerly imports surface.py, which does
-    ``from disort import disobrdf``. aerosol.py never touches disort, so a placeholder
-    lets the test import aerosol without the extension. ``monkeypatch`` removes the
-    placeholder after each test so later ``importorskip("disort")`` calls see the real state.
-    """
-    try:
-        import disort  # noqa: F401  compiled extension, may not be built
-    except ImportError:
-        stub = types.ModuleType("disort")
-        stub.disobrdf = None
-        monkeypatch.setitem(sys.modules, "disort", stub)
+def interpolator():
+    """Return ``_Interpolator`` from ``spires_lut.pyrt.aerosol``."""
     from spires_lut.pyrt.aerosol import _Interpolator
     return _Interpolator
 

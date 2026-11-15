@@ -2,7 +2,6 @@
 DISORT's surface treatment.
 """
 import numpy as np
-from disort import disobrdf
 
 
 # TODO: the surface isn't designed to be interacted with. Instead, wrap functions
@@ -114,6 +113,8 @@ class Surface:
             self, mu: float, mu0: float, phi: float, phi0: float,
             beam_flux: float, albedo, phase_function_number: int,
             brdf_arg: np.ndarray, n_mug: int):
+        # Imported here so importing spires_lut.pyrt does not require the compiled disort extension.
+        from disort import disobrdf
         return disobrdf(self.__user_angles, mu, beam_flux, mu0, False, albedo,
                         self.__only_fluxes, self.__rhoq, self.__rhou, self.__emust,
                         self.__bemst, False, phi, phi0, self.__rho_accurate,

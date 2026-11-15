@@ -3,6 +3,14 @@ DISORT's surface treatment.
 """
 import numpy as np
 
+try:
+    from disort import disobrdf
+except ImportError:
+    # The compiled disort extension is optional for importing this package. Keep the
+    # name so `from spires_lut.pyrt import *` exposes the same symbols either way.
+    def disobrdf(*args, **kwargs):
+        raise ImportError("the disort extension is not built; BRDF surfaces are unavailable")
+
 
 # TODO: the surface isn't designed to be interacted with. Instead, wrap functions
 #  around the methods so the user doesn't have to remember to call methods
@@ -113,8 +121,6 @@ class Surface:
             self, mu: float, mu0: float, phi: float, phi0: float,
             beam_flux: float, albedo, phase_function_number: int,
             brdf_arg: np.ndarray, n_mug: int):
-        # Imported here so importing spires_lut.pyrt does not require the compiled disort extension.
-        from disort import disobrdf
         return disobrdf(self.__user_angles, mu, beam_flux, mu0, False, albedo,
                         self.__only_fluxes, self.__rhoq, self.__rhou, self.__emust,
                         self.__bemst, False, phi, phi0, self.__rho_accurate,

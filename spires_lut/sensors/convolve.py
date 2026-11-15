@@ -116,6 +116,11 @@ def band_average(spectral: xr.DataArray, sensor: Sensor, wavelength_dim: str = "
     """
     if wavelength_dim not in spectral.dims:
         raise ValueError(f"spectral array has no {wavelength_dim!r} dim; dims are {spectral.dims}")
+    if wavelength_dim not in spectral.coords:
+        raise ValueError(
+            f"{wavelength_dim!r} dim has no coordinate; band_average needs wavelength in nm "
+            "as the coordinate values (positions would be silently read as nm)"
+        )
     grid = spectral[wavelength_dim].to_numpy().astype(float)
     weights = sensor_weights(sensor, grid)
     moved = spectral.transpose(wavelength_dim, ...)

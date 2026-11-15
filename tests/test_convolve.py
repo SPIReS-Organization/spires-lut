@@ -92,6 +92,13 @@ def test_band_average_requires_wavelength_dim():
         band_average(spectral, _sensor(Band(name="G", center_nm=1000.0, fwhm_nm=30.0, response="gaussian")))
 
 
+def test_band_average_rejects_wavelength_dim_without_coord():
+    # positions 0..n-1 must not be silently treated as nm
+    spectral = xr.DataArray(np.zeros((3, 2)), dims=("band", "solar_angle"))
+    with pytest.raises(ValueError, match="no coordinate"):
+        band_average(spectral, _sensor(Band(name="G", center_nm=1000.0, fwhm_nm=30.0, response="gaussian")))
+
+
 from pathlib import Path
 from unittest import mock
 

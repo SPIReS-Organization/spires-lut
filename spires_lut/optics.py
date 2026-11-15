@@ -102,12 +102,12 @@ def snow_lap_mixture(
         lap_type:        stem of the LAP optical-property arrays in lap.npz, e.g. "dust_skiles_size3"
         mss_cnc_lap:     LAP concentration per layer (micro g per g of snow)
         mss_cnc_snw_alg: snow algae concentration per layer (cells/mL)
-        lw_frac:         liquid water fraction per layer (percent). NOTE: converted to a fraction
-                         IN PLACE, as the original DISORT code did; pass a copy if you reuse the list.
+        lw_frac:         liquid water fraction per layer (percent); the caller's list is not modified.
         grain_shape:     1=sphere; 2=spheroid; 3=hexagonal plate; 4=koch snowflake (He et al. 2017)
 
     The number of layers is ``len(rds_snw)``.
     """
+    lw_frac = list(lw_frac)  # convert percent -> fraction on a copy, not the caller's list
     nbr_lyr = len(rds_snw)
 
     ssps_ice, ssps_water, ssps_lap = _load_optical_property_tables()

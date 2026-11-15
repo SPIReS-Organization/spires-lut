@@ -28,7 +28,8 @@ print(list_sensors())
 ```
 
 The `band` coordinate of a sensor LUT holds the band names `spires-io` emits
-(`B1..B9` for OLI, `B01..B12`/`B8A` for MSI and HLS, `1..7` for MODIS). Measured SRFs
+(`B1..B9` for OLI, `B01..B12`/`B8A` for MSI, `B01..B07` for HLS L30,
+`B01..B04`/`B8A`/`B11`/`B12` for HLS S30, `1..7` for MODIS). Measured SRFs
 for OLI, OLI-2, MSI and MODIS are bundled under `spires_lut/sensors/data/` (regenerate
 with `tools/fetch_srfs.py`); Landsat 10 uses Gaussian bands from the published
 centre/bandwidth table until SRFs exist. `examples/make_sensor_luts.py` runs the whole

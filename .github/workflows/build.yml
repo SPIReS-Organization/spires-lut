@@ -34,5 +34,12 @@ jobs:
 
       - name: Install wheel with test extras
         run: pip install "$(ls dist/*.whl)[test]"
+
+      - name: Smoke-test installed wheel from outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -c "import importlib.metadata as m, spires_lut, spires_lut.pyrt.aerosol; print(spires_lut.__file__, m.version('spires-lut'))"
+          python -c "from spires_lut.sensors import get_sensor; from spires_lut.sensors.convolve import band_weights, DISORT_GRID_NM; b = get_sensor('OLI').bands[0]; w = band_weights(b, DISORT_GRID_NM); assert abs(w.sum() - 1) < 1e-9; print('bundled SRF ok', b.srf_file)"
+
       - name: Run tests
         run: pytest -q

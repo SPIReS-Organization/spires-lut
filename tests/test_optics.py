@@ -58,6 +58,13 @@ def test_invalid_grain_radius_raises():
         _mix(rds=300.5)
 
 
+def test_snow_lap_mixture_does_not_mutate_lw_frac():
+    lw_frac = [10.0, 0.0]
+    _mix(rds_snw=[300.0, 300.0], rho_snw=[300.0, 300.0], dz=[100.0, 100.0],
+         mss_cnc_lap=[0.0, 0.0], lw_frac=lw_frac)
+    assert lw_frac == [10.0, 0.0]
+
+
 def test_two_stream_run_point_spectrum():
     from spires_lut import two_stream
 

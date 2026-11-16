@@ -7,7 +7,6 @@ besides ``io.py``, that imports ``spires_contract`` validators.
 from __future__ import annotations
 
 import datetime as dt
-from importlib.metadata import PackageNotFoundError, version
 
 import numpy as np
 import xarray as xr
@@ -17,10 +16,7 @@ from spires_contract.lut import validate_reflectance_lut
 from spires_lut.sensors.convolve import band_average
 from spires_lut.sensors.model import Sensor
 
-try:
-    _VERSION = version("spires-lut")
-except PackageNotFoundError:  # running from a checkout
-    _VERSION = "0+unknown"
+from spires_lut import __version__ as _VERSION
 
 _WAVELENGTH_DIM = "band"   # simulate.py stores wavelength (nm) on the 'band' axis
 

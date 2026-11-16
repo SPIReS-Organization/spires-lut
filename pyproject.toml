@@ -15,13 +15,11 @@ keywords = ["snow", "remote sensing", "xarray", "lookup table", "Mie scattering"
 dependencies = [
     "spires-contract @ git+https://github.com/SPIReS-Organization/spires-contract.git@v2.0.0",
     "numpy",
-    "ninja",
     "pandas",
     "scipy",
     "xarray",
     "pooch",
     "joblib",
-    "h5py",
     "tomli; python_version < '3.11'",
 ]
 
@@ -32,10 +30,6 @@ tools = ["openpyxl"]
 [project.urls]
 Homepage = "https://github.com/SPIReS-Organization/spires-lut"
 Repository = "https://github.com/SPIReS-Organization/spires-lut"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["spires_lut", "spires_lut.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

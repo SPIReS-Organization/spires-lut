@@ -53,6 +53,37 @@ def test_response_outside_grid_raises_naming_band():
         band_weights(b, GRID)
 
 
+def test_fully_in_grid_tophat_and_gaussian_sum_to_one_within_tolerance():
+    top = Band(name="T", center_nm=1000.0, fwhm_nm=20.0, response="tophat", lower_nm=990.0, upper_nm=1010.0)
+    gau = Band(name="G", center_nm=1600.0, fwhm_nm=90.0, response="gaussian")
+    assert band_weights(top, GRID).sum() == pytest.approx(1.0, abs=1e-12)
+    assert band_weights(gau, GRID).sum() == pytest.approx(1.0, abs=1e-6)
+
+
+def test_tophat_past_grid_edge_is_normalised_by_full_width():
+    # Grid spans 250-5000 nm; the band is 4000-5010 nm, so 1000 of its 1010 nm are on the grid.
+    b = Band(name="E", center_nm=4505.0, fwhm_nm=1010.0, response="tophat", lower_nm=4000.0, upper_nm=5010.0)
+    w = band_weights(b, GRID)
+    assert w.sum() == pytest.approx(1000.0 / 1010.0, rel=1e-12)
+    i = np.argmin(np.abs(GRID - 4995.0))
+    assert w[i] == pytest.approx(10.0 / 1010.0, rel=1e-12)  # not 10/1000 (in-grid renormalisation)
+
+
+def test_tophat_with_less_than_99_percent_in_grid_raises_naming_band_and_fraction():
+    # 1000 of 1015 nm on the grid = 98.5 %, just under the 99 % minimum.
+    b = Band(name="E", center_nm=4507.5, fwhm_nm=1015.0, response="tophat", lower_nm=4000.0, upper_nm=5015.0)
+    with pytest.raises(ValueError, match=r"'E'.*98\.52%"):
+        band_weights(b, GRID)
+
+
+def test_fraction_in_message_keeps_two_decimals_just_under_minimum():
+    # 0.9899 is under the 0.99 minimum; one decimal would print "99.0%", which reads as passing.
+    upper = 4000.0 + 1000.0 / 0.9899
+    b = Band(name="E", center_nm=4500.0, fwhm_nm=upper - 4000.0, response="tophat", lower_nm=4000.0, upper_nm=upper)
+    with pytest.raises(ValueError, match=r"98\.99% of its response"):
+        band_weights(b, GRID)
+
+
 def _sensor(*bands):
     return Sensor(name="X", platform="test", bands=bands, srf_source="n/a")
 
@@ -129,3 +160,31 @@ def test_srf_missing_column_names_band_and_file(monkeypatch):
     with pytest.raises(ValueError, match="flat_srf.csv"):
         band_weights(bad, GRID)
     convolve_mod.load_srf.cache_clear()
+
+
+def test_single_row_srf_raises_value_error_naming_band(monkeypatch, tmp_path):
+    # One sample has no integral; must hit the band-naming ValueError, not an IndexError.
+    (tmp_path / "one_row_srf.csv").write_text("band,wavelength_nm,response\nS,1000,1.0\n")
+    convolve_mod.load_srf.cache_clear()
+    monkeypatch.setattr(convolve_mod.resources, "files", lambda _pkg: tmp_path, raising=True)
+    b = Band(name="S", center_nm=1000.0, fwhm_nm=20.0, response="srf", srf_file="one_row_srf.csv", srf_band="S")
+    try:
+        with pytest.raises(ValueError, match=r"'S'.*no overlap"):
+            band_weights(b, GRID)
+    finally:
+        convolve_mod.load_srf.cache_clear()
+
+
+def test_srf_past_grid_edge_is_normalised_by_full_curve(monkeypatch, tmp_path):
+    # Flat measured curve 4000-5010 nm: 1010 nm of response, 1000 nm of it inside the grid (ends 5000 nm).
+    rows = ["band,wavelength_nm,response"] + [f"E,{w},1.0" for w in range(4000, 5011, 10)]
+    (tmp_path / "edge_srf.csv").write_text("\n".join(rows) + "\n")
+    convolve_mod.load_srf.cache_clear()
+    monkeypatch.setattr(convolve_mod.resources, "files", lambda _pkg: tmp_path, raising=True)
+    b = Band(name="E", center_nm=4505.0, fwhm_nm=1010.0, response="srf", srf_file="edge_srf.csv", srf_band="E")
+    try:
+        w = band_weights(b, GRID)
+    finally:
+        convolve_mod.load_srf.cache_clear()
+    assert w.sum() == pytest.approx(1000.0 / 1010.0, rel=1e-9)
+    assert w[np.argmin(np.abs(GRID - 4995.0))] == pytest.approx(10.0 / 1010.0, rel=1e-9)

@@ -121,11 +121,11 @@ bands = [
 ]
 
 # HLS L30: Landsat 8/9 OLI resampled to 30 m; no pan band. Codes follow the HLS/spires-io
-# convention (B01..B07, B09).
+# convention (B01..B07); no cirrus band.
 [sensors.HLSL30]
 platform = "Landsat 8/9 (HLS L30)"
 curves_from = "OLI"
-rename = { B1 = "B01", B2 = "B02", B3 = "B03", B4 = "B04", B5 = "B05", B6 = "B06", B7 = "B07", B9 = "B09" }
+rename = { B1 = "B01", B2 = "B02", B3 = "B03", B4 = "B04", B5 = "B05", B6 = "B06", B7 = "B07" }
 
 # HLS S30 as the product intends: MSI bands bandpass-adjusted to OLI. HLS applies the
 # adjustment to exactly these seven bands, so the OLI curves are used under the S30 codes.

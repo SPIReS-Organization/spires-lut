@@ -6,7 +6,7 @@ from spires_lut.sensors.convolve import DISORT_GRID_NM, band_weights
 
 EXPECTED_COUNTS = {
     "OLI": 9, "OLI2": 9, "MSI": 13, "MSI-S2B": 13, "MODIS": 7,
-    "HLSL30": 8, "HLSS30": 7, "HLSS30-msi": 13, "LANDSAT10": 21,
+    "HLSL30": 7, "HLSS30": 7, "HLSS30-msi": 13, "LANDSAT10": 21,
 }
 
 
@@ -29,7 +29,7 @@ def test_unknown_sensor_lists_available():
 def test_hls_aliases_share_oli_curves():
     oli = {b.name: b for b in get_sensor("OLI").bands}
     l30 = get_sensor("HLSL30")
-    assert l30.band_names == ("B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09")
+    assert l30.band_names == ("B01", "B02", "B03", "B04", "B05", "B06", "B07")
     assert l30.bands[0].srf_file == oli["B1"].srf_file == "oli.csv"
     assert l30.bands[0].srf_band == "B1"
     s30 = get_sensor("HLSS30")
